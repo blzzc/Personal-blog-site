@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { Aperture, ArrowDown, ArrowDownRight, ArrowUp, ArrowUpRight, Download, FileText, ImagePlus, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpRight, Download, FileText, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { categories, imageTypes, imageUrl, MAX_IMAGE_BYTES, MAX_IMAGES, sampleEntries, type Category, type Entry } from "../lib/journal";
 
 import { deleteDraft, downloadPosts, getDrafts, getPublished, prepareImage, saveDraft } from "../lib/storage";
@@ -13,6 +13,39 @@ const displayDate = (time: number) => dateFormat.format(time).replaceAll("-", ".
 
 function Orbit({ className = "" }: { className?: string }) {
   return <span className={`orbit ${className}`} aria-hidden="true"><i /><b /></span>;
+}
+
+function LaunchArt() {
+  return (
+    <div className="launch-art" aria-hidden="true">
+      <div className="launch-scene">
+        <span className="launch-sun" />
+        <span className="launch-moon" />
+        <span className="launch-orbit" />
+        <span className="launch-trail" />
+        <span className="launch-rocket"><i /><b /></span>
+        <span className="launch-star launch-star-top" />
+        <span className="launch-star launch-star-bottom" />
+      </div>
+    </div>
+  );
+}
+
+const sampleArt = new Map([
+  ["sample-moon", "moon"],
+  ["sample-antenna", "signal"],
+  ["sample-helmet", "visor"],
+]);
+
+function EntryCover({ entry }: { entry: Entry }) {
+  const artwork = sampleArt.get(entry.id);
+  const cover = entry.blocks.find((block) => block.type === "image");
+  return (
+    <div className="cover">
+      {artwork ? <div className={`sample-art sample-art-${artwork}`} aria-hidden="true"><i /><b /><span /></div>
+        : cover ? <img src={imageUrl(entry, cover)} alt={cover.caption} /> : <FileText size={42} strokeWidth={1.2} />}
+    </div>
+  );
 }
 
 function Modal({ children, onClose, locked = false }: { children: ReactNode; onClose: () => void; locked?: boolean }) {
@@ -274,19 +307,17 @@ export default function Home() {
       <main className="shell">
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-content">
-            <p className="hero-label"><span></span> PERSONAL FLIGHT JOURNAL</p>
+            <p className="hero-label">个人图文博客</p>
             <h1 id="hero-title">ORBITAL<br />LOG<span>.</span></h1>
             <p className="hero-description">用文字和照片，记录地球上的日常。</p>
             <a href="#archive" className="hero-link" onClick={() => setView("journal")}>浏览日志 <ArrowDown size={15} /></a>
           </div>
-          <span className="hero-corner" aria-hidden="true"><ArrowDownRight size={22} /></span>
-          <span className="hero-caption" aria-hidden="true"><i></i> EARTH / NIGHT PASS</span>
+          <LaunchArt />
         </section>
 
         <section className="archive" id="archive" aria-labelledby="archive-title">
           <div className="section-header">
             <div className="section-title">
-              <p className="eyebrow">{view === "journal" ? "THE ARCHIVE" : view === "gallery" ? "IMAGE LIBRARY" : "LOCAL DRAFTS"}</p>
               <h2 id="archive-title">{view === "journal" ? "日志档案" : view === "gallery" ? "影像集" : "本机草稿"}</h2>
             </div>
             {view === "journal" && (
@@ -306,12 +337,11 @@ export default function Home() {
               {visible.length === 0 && <p className="empty">{view === "drafts" ? "还没有草稿。" : "这个分类还没有日志。"}<button className="outline-button" onClick={write}><Plus size={16} /> 写日志</button></p>}
               <div className="grid">
                 {visible.map((entry) => {
-                  const cover = entry.blocks.find((block) => block.type === "image");
                   const excerpt = entry.blocks.find((block) => block.type === "text");
                   return (
                     <article className="card" key={entry.id}>
                       <button className="card-button" onClick={() => setModal({ mode: "read", entry, draft: view === "drafts" })} aria-label={`阅读${entry.title}`}>
-                        <div className="cover">{cover ? <img src={imageUrl(entry, cover)} alt={cover.caption} /> : <FileText size={42} strokeWidth={1.2} />}</div>
+                        <EntryCover entry={entry} />
                         <div className="card-content">
                           <p className="entry-meta"><span>{entry.category}</span><time dateTime={new Date(entry.createdAt).toISOString()}>{displayDate(entry.createdAt)}</time></p>
                           <h3>{entry.title}</h3>
@@ -342,7 +372,7 @@ export default function Home() {
           {status && <p className="toast" aria-hidden="true">{status}</p>}
         </section>
 
-        <footer><span><Aperture size={15} /> ORBITAL LOG</span><a href="#"><ArrowUp size={14} /> 返回顶部</a></footer>
+        <footer><span><Orbit /> ORBITAL LOG</span><a href="#"><ArrowUp size={14} /> 返回顶部</a></footer>
       </main>
 
       {modal?.mode === "edit" && (
